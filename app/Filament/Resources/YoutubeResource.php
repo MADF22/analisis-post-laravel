@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use Filament\Tables\Columns\TextColumn;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use App\Filament\Resources\YoutubeResource\Pages;
 use App\Models\Youtube;
 use Filament\Forms;
@@ -14,7 +17,7 @@ class YoutubeResource extends Resource
 {
     protected static ?string $model = Youtube::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'untitledui-youtube';
 
     public static function form(Form $form): Form
     {
@@ -26,11 +29,21 @@ class YoutubeResource extends Resource
                 Forms\Components\TextInput::make('hashtag')
                     ->label('Hashtag')
                     ->required(),
-                Forms\Components\TextInput::make('jam_post')
+                    Select::make('jam_post')
                     ->label('Time Post')
-                    ->type('time')
+                    ->options(function () {
+                        $times = [];
+                        foreach (range(0, 23) as $hour) {
+                            foreach (['00', '30'] as $minute) {
+                                $formattedTime = \Carbon\Carbon::createFromTime($hour, $minute)->format('h:i A');
+                                $value = \Carbon\Carbon::createFromTime($hour, $minute)->format('H:i');
+                                $times[$value] = $formattedTime;
+                            }
+                        }
+                        return $times;
+                    })
                     ->required()
-                    ->placeholder('HH:MM'),
+                    ->placeholder('Select Time'),
             ]);
     }
 
@@ -42,8 +55,11 @@ class YoutubeResource extends Resource
                     ->label('Description'),
                 Tables\Columns\TextColumn::make('hashtag')
                     ->label('Hashtag'),
-                Tables\Columns\TextColumn::make('jam_post')
-                    ->label('Time Post'),
+                    TextColumn::make('jam_post')
+                    ->label('Time Post')
+                    ->formatStateUsing(function ($state) {
+                        return \Carbon\Carbon::parse($state)->format('h:i A'); // Format 12 jam dengan AM/PM
+                    }),
             ])
             ->filters([
                 //
